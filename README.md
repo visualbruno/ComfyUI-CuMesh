@@ -23,3 +23,4 @@ For **ComfyUI Portable**:
 python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-CuMesh\wheels\cumesh-0.0.1-cp311-cp311-win_amd64.whl
 ```
 
+**You will find Wheels for Python 3.12 and 3.13 in the folder "wheels"**
