@@ -14,7 +14,9 @@
 For a standard Python environment:
 
 **Pay attention of the Torch version**
+
 **If you use Torch 2.7.0, the subfolder is Torch270**
+
 **If you use Torch 2.8.0, the subfolder is Torch280**
 
 ```bash
