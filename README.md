@@ -7,20 +7,26 @@
 
 ## ⚙️ Installation Guide
 
-> Tested on **Windows 11** with **Python 3.11** and **Torch >= 2.7.0 + cu128**.
+> Tested on **Windows 11** with **Python 3.11** and **Python 3.12** with **Torch = 2.7.0 + cu128** and **Torch = 2.8.0 + cu128**.
 
 ### 1. Install Wheel
 
 For a standard Python environment:
 
+**Pay attention of the Torch version**
+**If you use Torch 2.7.0, the subfolder is Torch270**
+**If you use Torch 2.8.0, the subfolder is Torch280**
+
 ```bash
-python -m pip install ComfyUI/custom_nodes/ComfyUI-CuMesh/wheels/cumesh-0.0.1-cp311-cp311-win_amd64.whl
+python -m pip install ComfyUI/custom_nodes/ComfyUI-CuMesh/wheels/Windows/Torch270/cumesh-0.0.1-cp311-cp311-win_amd64.whl
 ```
 
 For **ComfyUI Portable**:
 
 ```bash
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-CuMesh\wheels\cumesh-0.0.1-cp311-cp311-win_amd64.whl
+python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-CuMesh\wheels\Windows\Torch270\cumesh-0.0.1-cp311-cp311-win_amd64.whl
 ```
 
-**You will find Wheels for Python 3.12 and 3.13 in the folder "wheels"**
+
+
+
