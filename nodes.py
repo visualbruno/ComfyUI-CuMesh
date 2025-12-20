@@ -73,7 +73,7 @@ class CuMeshRemesh:
             "required": {
                 "trimesh": ("TRIMESH",),
                 "scale": ("FLOAT",{"default":1.0,"min":0.01,"max":9.99,"step":0.01}),
-                "resolution": ("INT",{"default":128,"min":16,"max":1024,"step":16}),
+                "resolution": ([128,256,512,1024,2048],{"default":1024}),
                 "band": ("FLOAT", {"default":1.0,"min":0.1,"max":9.9,"step":0.1}),
                 "project_back": ("FLOAT", {"default":0.9,"min":0.1,"max":9.9,"step":0.1}),
             },
@@ -98,6 +98,9 @@ class CuMeshRemesh:
         scale = (aabb_max - aabb_min).max().item()
         print(f"Center: {center}, Scale: {scale}")
 
+        print(f"Building BVH for current mesh...")
+        bvh = cuMesh.cuBVH(vertices, faces)
+
         new_vertices, new_faces = cumesh.remeshing.remesh_narrow_band_dc(
             vertices, faces,
             center = center,
@@ -105,7 +108,8 @@ class CuMeshRemesh:
             resolution = resolution,
             band = band,
             project_back = project_back,
-            verbose = True
+            verbose = True,
+            bvh = bvh
         )
         
         trimesh.vertices = new_vertices.cpu().numpy()
@@ -221,6 +225,63 @@ class CuMeshExportMesh:
             relative_path = Path(subfolder) / f'hy3dtemp_.{file_format}'
         
         return (str(relative_path), )        
+        
+class CuMeshPostProcessMesh:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "trimesh": ("TRIMESH",),
+                "fill_holes": ("BOOLEAN",{"default":True}),
+                "max_hole_perimeter": ("FLOAT",{"default":0.1,"min":0.001,"max":100.000}),
+                "remove_duplicate_faces": ("BOOLEAN",{"default":True}),
+                "repair_non_manifold_edges": ("BOOLEAN", {"default":True}),
+                "remove_non_manifold_faces": ("BOOLEAN", {"default":True}),
+                "remove_small_connected_components": ("BOOLEAN", {"default":True}),
+                "remove_small_connected_components_size": ("FLOAT", {"default":0.00001,"min":0.00001,"max":9.99999,"step":0.00001}),
+            },
+        }
+
+    RETURN_TYPES = ("TRIMESH", )
+    RETURN_NAMES = ("trimesh", )
+    FUNCTION = "process"
+    CATEGORY = "CuMeshWrapper"
+
+    def process(self, trimesh, fill_holes, max_hole_perimeter, remove_duplicate_faces, repair_non_manifold_edges, remove_non_manifold_faces, remove_small_connected_components, remove_small_connected_components_size):
+        print(f"Original mesh: {len(trimesh.vertices)} vertices, {len(trimesh.faces)} faces")
+        
+        mesh = TrimeshToCuMesh(trimesh)
+        
+        if fill_holes:
+            print('Filling holes ...')
+            mesh.fill_holes(max_hole_perimeter=0.1)
+            
+        if remove_duplicate_faces:
+            print('Removing duplicate faces ...')
+            mesh.remove_duplicate_faces()
+            
+        if repair_non_manifold_edges:
+            print('Repairing non manifold edges ...')
+            mesh.repair_non_manifold_edges()
+            
+        if remove_non_manifold_faces:
+            print('Removing non manifold faces ...')
+            mesh.remove_non_manifold_faces()
+            
+        if remove_small_connected_components:
+            print('Removing small connected components ...')
+            mesh.remove_small_connected_components(remove_small_connected_components_size)
+        
+        mesh.unify_face_orientations()            
+        
+        new_vertices, new_faces = mesh.read()
+        
+        print(f"After post processing: {len(new_vertices)} vertices, {len(new_faces)} faces")
+        
+        trimesh.vertices = new_vertices.cpu().numpy()
+        trimesh.faces = new_faces.cpu().numpy()        
+        
+        return (trimesh,)           
 
 NODE_CLASS_MAPPINGS = {
     "CuMeshUVUnWrap": CuMeshUVUnWrap,
@@ -229,6 +290,7 @@ NODE_CLASS_MAPPINGS = {
     "CuMeshFillHoles": CuMeshFillHoles,
     "CuMeshLoadMesh": CuMeshLoadMesh,
     "CuMeshExportMesh": CuMeshExportMesh,
+    "CuMeshPostProcessMesh": CuMeshPostProcessMesh,
     }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -238,4 +300,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CuMeshFillHoles": "CuMesh - Fill Holes",
     "CuMeshLoadMesh": "CuMesh - Load Mesh",
     "CuMeshExportMesh": "CuMesh - Export Mesh",
+    "CuMeshPostProcessMesh": "CuMesh - PostProcess Mesh",
     }
